@@ -1,0 +1,302 @@
+
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Control de Inventario</title>
+    <style>
+        body {
+            font-family: 'Arial', sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #f4f7fc;
+            color: #333;
+        }
+        header {
+            background-color: #ecf0f1; /* Fondo más claro para el encabezado */
+            padding: 20px;
+            text-align: center;
+            color: #2c3e50;
+        }
+        header img {
+            width: 180px;
+            margin-bottom: 10px;
+        }
+        h1 {
+            font-size: 28px;
+            margin-top: 10px;
+            font-weight: 600;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 40px auto;
+            padding: 20px;
+            background-color: white;
+            box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.1);
+            border-radius: 8px;
+        }
+        .form-container {
+            margin-bottom: 30px;
+        }
+        input[type="text"], input[type="password"], input[type="number"] {
+            width: 250px;
+            padding: 12px;
+            margin: 10px 0;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 14px;
+            box-sizing: border-box;
+        }
+        button {
+            background-color: #3498db;
+            color: white;
+            border: none;
+            padding: 12px 20px;
+            font-size: 16px;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+        }
+        button:hover {
+            background-color: #2980b9;
+        }
+        .login-container {
+            max-width: 400px;
+            margin: 50px auto;
+            text-align: center;
+        }
+        footer {
+            text-align: center;
+            padding: 20px;
+            background-color: #2c3e50;
+            color: white;
+            margin-top: 50px;
+        }
+    </style>
+</head>
+<body>
+
+    <header>
+        <img src="Logo_Nix_Proyectos-1.png" alt="Logo Nix Proyectos">
+        <h1>Control de Inventario</h1>
+    </header>
+
+    <div class="login-container" id="login-container" style="display: block;">
+        <h2>Iniciar sesión</h2>
+        <form id="login-form">
+            <input type="text" id="username" placeholder="Usuario" required>
+            <input type="password" id="password" placeholder="Contraseña" required>
+            <button type="button" onclick="login()">Iniciar sesión</button>
+            <button type="button" onclick="showRegister()">Registrar nuevo usuario</button>
+        </form>
+    </div>
+
+    <div class="login-container" id="register-container" style="display: none;">
+        <h2>Registrar nuevo usuario</h2>
+        <form id="register-form">
+            <input type="text" id="new-username" placeholder="Nuevo Usuario" required>
+            <input type="password" id="new-password" placeholder="Nueva Contraseña" required>
+            <button type="button" onclick="registerUser()">Registrar</button>
+            <button type="button" onclick="showLogin()">Volver al login</button>
+        </form>
+    </div>
+
+    <div class="container" id="inventory-container" style="display: none;">
+        <div>
+            <h2>Bienvenido, <span id="username-display"></span></h2>
+        </div>
+
+        <div class="form-container">
+            <h3>Agregar Producto</h3>
+            <form id="add-product-form">
+                <input type="text" id="product-code" placeholder="Código del Producto" required>
+                <input type="text" id="product-name" placeholder="Nombre del Producto" required>
+                <input type="number" id="product-quantity" placeholder="Cantidad Inicial" required>
+                <button type="button" onclick="addProduct()">Agregar Producto</button>
+            </form>
+        </div>
+
+        <h3>Gestionar Inventario</h3>
+        <table id="inventory-table">
+            <thead>
+                <tr>
+                    <th>Código</th>
+                    <th>Producto</th>
+                    <th>Cantidad</th>
+                    <th>Stock Total</th>
+                    <th>Acciones</th>
+                </tr>
+            </thead>
+            <tbody>
+            </tbody>
+        </table>
+        <button onclick="generatePDF()">Generar Reporte PDF</button>
+    </div>
+
+    <footer>
+        <p>&copy; 2025 Nix Proyectos | Todos los derechos reservados</p>
+    </footer>
+
+    <script>
+        let inventory = [];
+        let users = [
+            { username: "admin", password: "12345" } // Usuario por defecto
+        ];
+        let currentUser = null;
+
+        // Mostrar el formulario de login solo si no hay usuario logueado
+        if (!currentUser) {
+            document.getElementById("login-container").style.display = "block";
+        }
+
+        function login() {
+            const username = document.getElementById("username").value;
+            const password = document.getElementById("password").value;
+
+            const user = users.find(u => u.username === username && u.password === password);
+
+            if (user) {
+                currentUser = user;
+                document.getElementById("login-container").style.display = "none";
+                document.getElementById("inventory-container").style.display = "block";
+                document.getElementById("username-display").textContent = username; // Mostrar nombre del usuario autenticado
+            } else {
+                alert("Usuario o contraseña incorrectos");
+            }
+        }
+
+        function showRegister() {
+            document.getElementById("login-container").style.display = "none";
+            document.getElementById("register-container").style.display = "block";
+        }
+
+        function showLogin() {
+            document.getElementById("register-container").style.display = "none";
+            document.getElementById("login-container").style.display = "block";
+        }
+
+        function registerUser() {
+            const username = document.getElementById("new-username").value;
+            const password = document.getElementById("new-password").value;
+
+            if (users.some(u => u.username === username)) {
+                alert("El nombre de usuario ya está registrado.");
+            } else {
+                users.push({ username, password });
+                alert("Usuario registrado exitosamente.");
+                showLogin();
+            }
+        }
+
+        function addProduct() {
+            const productCode = document.getElementById("product-code").value;
+            const productName = document.getElementById("product-name").value;
+            const productQuantity = parseInt(document.getElementById("product-quantity").value);
+
+            if (productCode && productName && productQuantity) {
+                let product = inventory.find(p => p.code === productCode);
+
+                if (product) {
+                    if (product.name === productName) {
+                        product.quantity += productQuantity;
+                        product.stockTotal += productQuantity; // Sumar al stock total
+                    } else {
+                        alert("El código ya está registrado con otro producto.");
+                    }
+                } else {
+                    product = {
+                        code: productCode,
+                        name: productName,
+                        quantity: productQuantity,
+                        stockTotal: productQuantity
+                    };
+                    inventory.push(product);
+                }
+
+                displayInventory();
+                document.getElementById("add-product-form").reset();
+            } else {
+                alert("Por favor, complete todos los campos.");
+            }
+        }
+
+        function displayInventory() {
+            const tableBody = document.querySelector("#inventory-table tbody");
+            tableBody.innerHTML = ""; // Limpiar la tabla
+
+            inventory.forEach((product, index) => {
+                const row = document.createElement("tr");
+
+                const productCodeCell = document.createElement("td");
+                productCodeCell.textContent = product.code;
+
+                const productNameCell = document.createElement("td");
+                productNameCell.textContent = product.name;
+
+                const productQuantityCell = document.createElement("td");
+                productQuantityCell.textContent = product.quantity;
+
+                const productStockTotalCell = document.createElement("td");
+                productStockTotalCell.textContent = product.stockTotal;
+
+                const actionsCell = document.createElement("td");
+                actionsCell.innerHTML = `
+                    <button onclick="editProduct(${index})">Modificar</button>
+                    <button onclick="deleteProduct(${index})">Eliminar</button>
+                `;
+
+                row.appendChild(productCodeCell);
+                row.appendChild(productNameCell);
+                row.appendChild(productQuantityCell);
+                row.appendChild(productStockTotalCell);
+                row.appendChild(actionsCell);
+
+                tableBody.appendChild(row);
+            });
+        }
+
+        function editProduct(index) {
+            const product = inventory[index];
+            const newQuantity = prompt("Ingrese la nueva cantidad:", product.quantity);
+            if (newQuantity) {
+                product.quantity = parseInt(newQuantity);
+                product.stockTotal = product.quantity; // Actualizar el stock total
+                displayInventory();
+            }
+        }
+
+        function deleteProduct(index) {
+            const confirmDelete = confirm("¿Está seguro de que desea eliminar este producto?");
+            if (confirmDelete) {
+                inventory.splice(index, 1);
+                displayInventory();
+            }
+        }
+
+        function generatePDF() {
+            const { jsPDF } = window.jspdf;
+            const doc = new jsPDF();
+            doc.setFontSize(18);
+            doc.text("Reporte de Inventario", 20, 20);
+            doc.setFontSize(12);
+            doc.text("Fecha: " + new Date().toLocaleDateString(), 20, 30);
+
+            const headers = ['Código', 'Producto', 'Cantidad', 'Stock Total'];
+            const rows = inventory.map(product => [
+                product.code, product.name, product.quantity, product.stockTotal
+            ]);
+
+            doc.autoTable({
+                head: [headers],
+                body: rows,
+                startY: 40,
+                theme: 'grid',
+                margin: { top: 20 }
+            });
+
+            doc.save('inventario_report.pdf');
+        }
+    </script>
+</body>
+</html>
